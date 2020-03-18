@@ -22,6 +22,23 @@ Resources:
         Type: AWS::EC2::EIP
         Properties:
             InstanceId: !Ref MyEC2Instance
+    MyLoadBalancer:
+        Type: AWS::ElasticLoadBalancing::LoadBalancer
+        Properties:
+            Instances:
+                [!Ref MyEC2Instance]
+            AvailabilityZones:
+                - "us-east-1c"
+            Listeners:
+                - LoadBalancerPort: '80'
+                  InstancePort: '80'
+                  Protocol: HTTP
+            HealthCheck:
+                Target: HTTP:80/
+                HealthyThreshold: '3'
+                UnhealthyThreshold: '5'
+                Interval: '30'
+                Timeout: '5'
     S3Bucket:
         Type: 'AWS::S3::Bucket'
         Properties:
