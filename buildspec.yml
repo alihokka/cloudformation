@@ -18,10 +18,22 @@ Resources:
                       Iops: 200
                       DeleteOnTermination: false
                       VolumeSize: 20
+            SecurityGroupIds:
+                - !Ref EkaSG
     MyEIP:
         Type: AWS::EC2::EIP
         Properties:
             InstanceId: !Ref MyEC2Instance
+    EkaSG:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: vpc-bcd4e6c6
+            GroupDescription: Sample source security group
+    TokaSG:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            VpcId: vpc-bcd4e6c6
+            GroupDescription: Sample target security group
     MyLoadBalancer:
         Type: AWS::ElasticLoadBalancing::LoadBalancer
         Properties:
@@ -39,6 +51,8 @@ Resources:
                 UnhealthyThreshold: '5'
                 Interval: '30'
                 Timeout: '5'
+            SecurityGroups:
+                - !Ref TokaSG
     S3Bucket:
         Type: 'AWS::S3::Bucket'
         Properties:
