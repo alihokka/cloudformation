@@ -2,15 +2,18 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Academy Demo CloudFormation
 Resources:
     S3Bucket:
-        Type: AWS::S3::Bucket
+        Type: 'AWS::S3::Bucket'
         Properties:
             AccessControl: PublicRead
             WebsiteConfiguration:
                 IndexDocument: index.html
                 ErrorDocument: error.html
         DeletionPolicy: Retain
+        Metadata:
+            'AWS::CloudFormation::Designer':
+                id: fd35610d-6d3e-49b1-8666-94d6d3babfe5
     BucketPolicy:
-        Type: AWS::S3::BucketPolicy
+        Type: 'AWS::S3::BucketPolicy'
         Properties:
             PolicyDocument:
                 Id: MyPolicy
@@ -26,6 +29,15 @@ Resources:
                             - !Ref S3Bucket
                             - /*
             Bucket: !Ref S3Bucket
+        Metadata:
+            'AWS::CloudFormation::Designer':
+                id: 345b6099-3427-4f4e-8d64-7aa820cd2495
+    SQSQ4OSYH:
+        Type: 'AWS::SQS::Queue'
+        Properties: {}
+        Metadata:
+            'AWS::CloudFormation::Designer':
+                id: d344ac44-609c-44ec-a23f-a9383063727a
 Outputs:
     WebsiteURL:
         Value: !GetAtt
