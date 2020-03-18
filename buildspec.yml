@@ -29,6 +29,11 @@ Resources:
         Properties:
             VpcId: vpc-bcd4e6c6
             GroupDescription: Sample source security group
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: '80'
+                  ToPort: '80'
+                  SourceSecurityGroupId: !Ref TokaSG
     TokaSG:
         Type: AWS::EC2::SecurityGroup
         Properties:
