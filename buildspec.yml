@@ -90,3 +90,5 @@ Outputs:
                   - S3Bucket
                   - DomainName
         Description: lauribucket
+    LoadBalancerDNSAddress:
+        Value: !GetAtt MyLoadBalancer.DNSName
