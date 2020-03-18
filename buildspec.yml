@@ -24,7 +24,6 @@ Resources:
         Type: AWS::EC2::EIP
         Properties:
             InstanceId: !Ref MyEC2Instance
-            #turharivi
     EkaSG:
         Type: AWS::EC2::SecurityGroup
         Properties:
