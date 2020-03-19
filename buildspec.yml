@@ -4,68 +4,78 @@ Parameters:
     LatestAmiId:
         Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
         Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+    InstanceTypeParameter:
+        Type: String
+        Default: t2.micro
 Resources:
-    MyEC2Instance:
-        Type: "AWS::EC2::Instance"
-        Properties:
-            ImageId: !Ref LatestAmiId
-            InstanceType: t2.micro
-            KeyName: lauri-keypair-tiistai
-            BlockDeviceMappings:
-                - DeviceName: /dev/sdm
-                  Ebs:
-                      VolumeType: io1
-                      Iops: 200
-                      DeleteOnTermination: false
-                      VolumeSize: 20
-            SecurityGroupIds:
-                - !Ref EkaSG
-    MyEIP:
-        Type: AWS::EC2::EIP
-        Properties:
-            InstanceId: !Ref MyEC2Instance
-    EkaSG:
+    InstanssinSG:
         Type: AWS::EC2::SecurityGroup
         Properties:
-            VpcId: vpc-bcd4e6c6
             GroupDescription: Sample source security group
             SecurityGroupIngress:
                 - IpProtocol: tcp
                   FromPort: '80'
                   ToPort: '80'
-                  SourceSecurityGroupId: !Ref TokaSG
-    TokaSG:
+                  SourceSecurityGroupId: !Ref LoadbalancerSG
+    MyAutoScalingGroup:
+        Type: AWS::AutoScaling::AutoScalingGroup
+        Properties:
+            AvailabilityZones:
+                - "us-east-1c"
+                - "us-east-1d"
+            LaunchConfigurationName: !Ref MyLaunchConfiguration
+            MinSize: '1'
+            MaxSize: '3'
+            TargetGroupARNs:
+                - Ref: V2TG
+    MyLaunchConfiguration:
+        Type: AWS::AutoScaling::LaunchConfiguration
+        Properties:
+            ImageId: !Ref LatestAmiId
+            InstanceType: !Ref InstanceTypeParameter
+            SecurityGroups:
+                - !Ref InstanssinSG
+            UserData:
+                Fn::Base64:
+                    Fn::Join:
+                        - "\n"
+                        - - "#!/bin/bash"
+                          - "amazon-linux-extras install epel"
+                          - "amazon-linux-extras install nginx1"
+                          - "systemctl start nginx"
+    LoadbalancerSG:
         Type: AWS::EC2::SecurityGroup
         Properties:
             VpcId: vpc-bcd4e6c6
             GroupDescription: Sample target security group
+            SecurityGroupIngress:
+                - IpProtocol: tcp
+                  FromPort: '80'
+                  ToPort: '80'
+                  CidrIp: 0.0.0.0/0
     MyLoadBalancer:
         Type: AWS::ElasticLoadBalancingV2::LoadBalancer
         Properties:
+            Scheme: internet-facing
             Subnets:
                 - subnet-7a917d5b
                 - subnet-96e253db
             SecurityGroups:
-                - !Ref TokaSG
+                - !Ref LoadbalancerSG
     Kuuntelija:
         Type: "AWS::ElasticLoadBalancingV2::Listener"
         Properties:
             DefaultActions:
-                - Type: "redirect"
-                  RedirectConfig:
-                      Protocol: "HTTPS"
-                      Port: "443"
-                      Host: "#{host}"
-                      Path: "/#{path}"
-                      Query: "#{query}"
-                      StatusCode: "HTTP_301"
+                - Type: forward
+                  TargetGroupArn: !Ref V2TG
             LoadBalancerArn: !Ref MyLoadBalancer
             Port: 80
             Protocol: "HTTP"
     V2TG:
         Type: AWS::ElasticLoadBalancingV2::TargetGroup
         Properties:
-            Port: "80"
+            TargetType: instance
+            Port: 80
             Protocol: "HTTP"
             VpcId: vpc-bcd4e6c6
     S3Bucket:
